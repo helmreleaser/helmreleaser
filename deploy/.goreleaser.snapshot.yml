@@ -1,0 +1,29 @@
+project_name: helmreleaser
+release:
+  github:
+    owner: helmreleaser
+    name: helmreleaser
+builds:
+  - id: helmreleaser
+  - goos:
+    - linux
+    - windows
+    - darwin
+    goarch:
+    - amd64
+    - "386"
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    main: cmd/helmreleaser/main.go
+    ldflags: -s -w
+      -X github.com/helmreleaser/helmreleaser/pkg/version.version={{.Version}}
+      -X github.com/helmreleaser/helmreleaser/pkg/version.gitSHA={{.Commit}}
+      -X github.com/helmreleaser/helmreleaser/pkg/version.buildTime={{.Date}}
+      -extldflags "-static"
+    flags: -tags netgo -installsuffix netgo
+    binary: helmreleaser
+    hooks: {}
+
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}

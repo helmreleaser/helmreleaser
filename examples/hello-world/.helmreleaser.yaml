@@ -1,0 +1,14 @@
+
+chartVersion: {{ .Major }}.{{ .Minor }}.{{ .Patch }}
+appVersion: {{ .Major }}.{{ .Minor }}.{{ .Patch }}
+images:
+    id: nginx
+      imageKey: image.repository
+      tagKey: image.tag
+      imageTemplate: nginx
+      imageTag: stable
+
+snapshot:
+    images:
+        id: nginx
+          imageTag: latest
