@@ -135,14 +135,29 @@ func RootCmd(out io.Writer) *cobra.Command {
 				return nil
 			}
 
-			// publish chart to chartserver
-			_, err = chartserver.PublishChartVersion(helmReleaser, context, shasum, "default", downloadPath)
-			if err != nil {
-				logger.Error(err)
-				logger.Info("")
-				os.Exit(1)
-				return nil
+			if helmReleaser.HelmRepo != nil {
+				if helmReleaser.HelmRepo.ChartServer != nil {
+					// publish chart to chartserver
+					spec, err := chartserver.CreateChartVersionSpec(helmReleaser, context, "default", shasum, downloadPath)
+					if err != nil {
+						logger.Error(err)
+						logger.Info("")
+						os.Exit(1)
+						return nil
+					}
+
+					if helmReleaser.HelmRepo.ChartServer.Filename != "" {
+						if err = chartserver.WriteSpecFile(spec, helmReleaser.HelmRepo.ChartServer.Filename); err != nil {
+							logger.Error(err)
+							logger.Info("")
+							os.Exit(1)
+							return nil
+						}
+					}
+
+				}
 			}
+
 			logger.Info("")
 
 			return nil

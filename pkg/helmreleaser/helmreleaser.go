@@ -25,6 +25,18 @@ type HelmReleaser struct {
 	Snapshot Snapshot `yaml:"snapshot,omitempty"`
 
 	Archive *Archive `yaml:"archive,omitempty"`
+
+	HelmRepo *HelmRepo `yaml:"helmRepo,omitempty"`
+}
+
+type HelmRepo struct {
+	ChartServer *ChartServer `yaml:"chartServer,omitempty"`
+}
+
+type ChartServer struct {
+	Apply       bool   `yaml:"apply"`
+	KubeContext string `yaml:"kubeContext,omitempty"`
+	Filename    string `yaml:"filename,omitempty"`
 }
 
 type Archive struct {
