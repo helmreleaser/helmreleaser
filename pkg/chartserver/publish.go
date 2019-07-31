@@ -50,7 +50,9 @@ func CreateChartVersionSpec(h *helmreleaser.HelmReleaser, ctx *helmreleaser.Helm
 			Maintainers:  h.Maintainers,
 			Name:         h.Name,
 			Sources:      h.Sources,
-			URLs:         h.URLs,
+			URLs: []string{
+				downloadPath,
+			},
 		},
 	}
 

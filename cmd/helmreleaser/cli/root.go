@@ -205,5 +205,5 @@ func calculateSha256(name string) (string, error) {
 		return "", errors.Wrap(err, "failed to copy file to sha hasher")
 	}
 
-	return fmt.Sprintf("%#x", hasher.Sum(nil)), nil
+	return fmt.Sprintf("%x", hasher.Sum(nil)), nil
 }

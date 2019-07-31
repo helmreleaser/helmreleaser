@@ -18,7 +18,6 @@ type HelmReleaser struct {
 	Maintainers  []string `yaml:"maintainers,omitempty"`
 	Name         string   `yaml:"name,omitempty"`
 	Sources      []string `yaml:"sources,omitempty"`
-	URLs         []string `yaml:"urls,omitempty"`
 
 	Images []Image `yaml:"images,omitempty"`
 
