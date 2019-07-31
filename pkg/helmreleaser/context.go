@@ -8,17 +8,27 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
 type HelmReleaserContext struct {
 	Major int64
 	Minor int64
 	Patch int64
+
+	Tag string
+
+	GitRemote GitRemote
+}
+
+type GitRemote struct {
+	Owner string
+	Name  string
 }
 
 // CreateContext will create a context that can be used to render
 // The dir param should be the path in the git repo, not the temp directory
-func CreateContext(dir string, scmToken string) (*HelmReleaserContext, error) {
+func (h HelmReleaser) CreateContext(dir string, scmToken string) (*HelmReleaserContext, error) {
 	r, err := git.PlainOpenWithOptions(dir, &git.PlainOpenOptions{
 		DetectDotGit: true,
 	})
@@ -61,13 +71,36 @@ func CreateContext(dir string, scmToken string) (*HelmReleaserContext, error) {
 
 	latestTag := semverTags[0]
 
-	// scm := scm.NewGitHubClient(scmToken)
-	// fmt.Printf("%#v\n", scm)
+	originRemote, err := r.Remote("origin")
+	if err != nil {
+		return nil, errors.New("no remote named 'origin' found")
+	}
+	endpoint, err := transport.NewEndpoint(originRemote.Config().URLs[0])
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse git url")
+	}
+	splitPath := strings.Split(endpoint.Path, "/")
 
 	helmReleaserContext := HelmReleaserContext{
+		Tag:   latestTag.Original(),
 		Major: latestTag.Major(),
 		Minor: latestTag.Minor(),
 		Patch: latestTag.Patch(),
+		GitRemote: GitRemote{
+			Owner: splitPath[0],
+			Name:  splitPath[1],
+		},
+	}
+
+	if h.Archive != nil {
+		if h.Archive.GitHub != nil {
+			if h.Archive.GitHub.Owner != "" {
+				helmReleaserContext.GitRemote.Owner = h.Archive.GitHub.Owner
+			}
+			if h.Archive.GitHub.Name != "" {
+				helmReleaserContext.GitRemote.Name = h.Archive.GitHub.Name
+			}
+		}
 	}
 
 	return &helmReleaserContext, nil

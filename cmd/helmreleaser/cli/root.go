@@ -10,6 +10,7 @@ import (
 
 	"github.com/helmreleaser/helmreleaser/pkg/helmreleaser"
 	"github.com/helmreleaser/helmreleaser/pkg/logger"
+	"github.com/helmreleaser/helmreleaser/pkg/scm"
 	"github.com/otiai10/copy"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,19 +28,17 @@ func RootCmd(out io.Writer) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v := viper.GetViper()
 
+			wd, err := os.Getwd()
+			if err != nil {
+				panic(err)
+			}
+
 			logger := logger.NewLogger()
 
 			logger.Info("")
 
 			// read the config
-			wd, err := os.Getwd()
-			if err != nil {
-				logger.Error(err)
-				logger.Info("")
-				os.Exit(1)
-				return nil
-			}
-			p := path.Join(wd, ".helmreleaser.yaml")
+			p := path.Join(v.GetString("chart-dir"), ".helmreleaser.yaml")
 			logger.Info("Reading config from %s", p)
 			helmReleaser, err := helmreleaser.ReadFromFile(p)
 			if err != nil {
@@ -72,7 +71,7 @@ func RootCmd(out io.Writer) *cobra.Command {
 			}
 
 			// render
-			context, err := helmreleaser.CreateContext(v.GetString("chart-dir"), os.Getenv("GITHUB_TOKEN"))
+			context, err := helmReleaser.CreateContext(v.GetString("chart-dir"), os.Getenv("GITHUB_TOKEN"))
 			if err != nil {
 				logger.Error(err)
 				logger.Info("")
@@ -105,10 +104,19 @@ func RootCmd(out io.Writer) *cobra.Command {
 				os.Exit(1)
 				return nil
 			}
+			defer os.RemoveAll(name)
 
 			// publish
+			scm := scm.NewGitHubClient(os.Getenv("GITHUB_TOKEN"))
+			if err := scm.PublishRelease(*context, name); err != nil {
+				logger.Error(err)
+				logger.Info("")
+				os.Exit(1)
+				return nil
+			}
 
-			fmt.Printf("%s\n", name)
+			logger.Info("")
+
 			return nil
 		},
 	}
