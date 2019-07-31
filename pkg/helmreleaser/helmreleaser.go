@@ -6,12 +6,21 @@ import (
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 type HelmReleaser struct {
-	ChartVersion string  `yaml:"chartVersion"`
-	AppVersion   string  `yaml:"appVersion"`
-	Images       []Image `yaml:"images,omitempty"`
+	ChartVersion string   `yaml:"chartVersion,omitempty"`
+	AppVersion   string   `yaml:"appVersion,omitempty"`
+	Description  string   `yaml:"description,omitempty"`
+	Home         string   `yaml:"home,omitempty"`
+	Icon         string   `yaml:"icon,omitempty"`
+	Maintainers  []string `yaml:"maintainers,omitempty"`
+	Name         string   `yaml:"name,omitempty"`
+	Sources      []string `yaml:"sources,omitempty"`
+	URLs         []string `yaml:"urls,omitempty"`
+
+	Images []Image `yaml:"images,omitempty"`
 
 	Snapshot Snapshot `yaml:"snapshot,omitempty"`
 
@@ -84,4 +93,38 @@ func ReadFromFile(filename string) (*HelmReleaser, error) {
 	}
 
 	return &helmReleaser, nil
+}
+
+func (h *HelmReleaser) MergeValuesFromChart(filename string) error {
+	chartYAML, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return errors.Wrap(err, "failed to read to merge Chart.yaml")
+	}
+
+	metadata := chart.Metadata{}
+	if err := yaml.Unmarshal(chartYAML, &metadata); err != nil {
+		return errors.Wrap(err, "failed to parse to merge Chart.yaml")
+	}
+
+	h.Sources = metadata.GetSources()
+	if h.Name == "" {
+		h.Name = metadata.GetName()
+	}
+	h.Maintainers = []string{}
+	for _, maintainer := range metadata.GetMaintainers() {
+		h.Maintainers = append(h.Maintainers, maintainer.String())
+	}
+	h.Icon = metadata.GetIcon()
+	h.Home = metadata.GetHome()
+	if h.Description == "" {
+		h.Description = metadata.GetDescription()
+	}
+	if h.AppVersion == "" {
+		h.AppVersion = metadata.GetAppVersion()
+	}
+	if h.ChartVersion == "" {
+		h.ChartVersion = metadata.GetVersion()
+	}
+
+	return nil
 }

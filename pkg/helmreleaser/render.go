@@ -11,6 +11,17 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
+func (h HelmReleaser) RenderString(context HelmReleaserContext, in string) (string, error) {
+	t := template.New(in)
+	tt := template.Must(t.Parse(in))
+	output := new(bytes.Buffer)
+	if err := tt.Execute(output, context); err != nil {
+		return "", errors.Wrap(err, "failed to template string")
+	}
+
+	return output.String(), nil
+}
+
 func (h HelmReleaser) Render(context HelmReleaserContext, dir string) error {
 	t := template.New("release")
 

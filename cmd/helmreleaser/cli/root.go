@@ -9,6 +9,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/helmreleaser/helmreleaser/pkg/chartserver"
 	"github.com/helmreleaser/helmreleaser/pkg/helmreleaser"
 	"github.com/helmreleaser/helmreleaser/pkg/logger"
 	"github.com/helmreleaser/helmreleaser/pkg/scm"
@@ -50,7 +51,14 @@ func RootCmd(out io.Writer) *cobra.Command {
 				return nil
 			}
 
-			// check that we are in a chart directory
+			cp := path.Join(v.GetString("chart-dir"), "Chart.yaml")
+			logger.Info("Merging values from Chart.yaml")
+			if err := helmReleaser.MergeValuesFromChart(cp); err != nil {
+				logger.Error(err)
+				logger.Info("")
+				os.Exit(1)
+				return nil
+			}
 
 			// copy to a temp directory
 			dir, err := ioutil.TempDir("", "helmreleaser")
@@ -128,8 +136,13 @@ func RootCmd(out io.Writer) *cobra.Command {
 			}
 
 			// publish chart to chartserver
-			fmt.Printf("shasum = %s\n", shasum)
-			fmt.Printf("downloadPath = %s\n", downloadPath)
+			_, err = chartserver.PublishChartVersion(helmReleaser, context, shasum, "default", downloadPath)
+			if err != nil {
+				logger.Error(err)
+				logger.Info("")
+				os.Exit(1)
+				return nil
+			}
 			logger.Info("")
 
 			return nil
