@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"github.com/helmreleaser/helmreleaser/pkg/logger"
 	"github.com/helmreleaser/helmreleaser/pkg/scm"
 	"github.com/otiai10/copy"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/helm/pkg/chartutil"
@@ -106,15 +108,28 @@ func RootCmd(out io.Writer) *cobra.Command {
 			}
 			defer os.RemoveAll(name)
 
-			// publish
-			scm := scm.NewGitHubClient(os.Getenv("GITHUB_TOKEN"))
-			if err := scm.PublishRelease(*context, name); err != nil {
+			// calculate the sha
+			shasum, err := calculateSha256(name)
+			if err != nil {
 				logger.Error(err)
 				logger.Info("")
 				os.Exit(1)
 				return nil
 			}
 
+			// publish chart to scm host
+			scm := scm.NewGitHubClient(os.Getenv("GITHUB_TOKEN"))
+			downloadPath, err := scm.PublishRelease(*context, name)
+			if err != nil {
+				logger.Error(err)
+				logger.Info("")
+				os.Exit(1)
+				return nil
+			}
+
+			// publish chart to chartserver
+			fmt.Printf("shasum = %s\n", shasum)
+			fmt.Printf("downloadPath = %s\n", downloadPath)
 			logger.Info("")
 
 			return nil
@@ -149,4 +164,18 @@ func InitAndExecute() {
 func initConfig() {
 	viper.SetEnvPrefix("HELMRELEASER")
 	viper.AutomaticEnv()
+}
+
+func calculateSha256(name string) (string, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to open file")
+	}
+	defer f.Close()
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", errors.Wrap(err, "failed to copy file to sha hasher")
+	}
+
+	return fmt.Sprintf("%#x", hasher.Sum(nil)), nil
 }

@@ -10,10 +10,10 @@ type SCMClient struct {
 	GitHub *github.Client
 }
 
-func (s *SCMClient) PublishRelease(context helmreleaser.HelmReleaserContext, filename string) error {
+func (s *SCMClient) PublishRelease(context helmreleaser.HelmReleaserContext, filename string) (string, error) {
 	if s.GitHub != nil {
 		return s.publishGitHubRelease(context, filename)
 	}
 
-	return errors.New("no scm provider found")
+	return "", errors.New("no scm provider found")
 }

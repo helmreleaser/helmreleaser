@@ -1,6 +1,7 @@
 package helmreleaser
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/object"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 )
 
@@ -19,11 +21,17 @@ type HelmReleaserContext struct {
 	Tag string
 
 	GitRemote GitRemote
+
+	changelog string
 }
 
 type GitRemote struct {
 	Owner string
 	Name  string
+}
+
+func (c HelmReleaserContext) GetChangelog() string {
+	return c.changelog
 }
 
 // CreateContext will create a context that can be used to render
@@ -43,6 +51,8 @@ func (h HelmReleaser) CreateContext(dir string, scmToken string) (*HelmReleaserC
 	defer tags.Close()
 
 	semverTags := []*semver.Version{}
+	fullVersions := make(map[string]string)
+
 	tags.ForEach(func(t *plumbing.Reference) error {
 		tagNameSplit := strings.Split(t.Name().String(), "/")
 		if len(tagNameSplit) < 3 {
@@ -54,6 +64,8 @@ func (h HelmReleaser) CreateContext(dir string, scmToken string) (*HelmReleaserC
 		if err != nil {
 			return errors.Wrap(err, "failed to parse semver tag")
 		}
+
+		fullVersions[ver.Original()] = t.Name().String()
 
 		semverTags = append(semverTags, ver)
 		return nil
@@ -103,5 +115,42 @@ func (h HelmReleaser) CreateContext(dir string, scmToken string) (*HelmReleaserC
 		}
 	}
 
+	changelog, err := readChangelog(r, fullVersions[latestTag.Original()])
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create a changelog")
+	}
+	helmReleaserContext.changelog = changelog
+
 	return &helmReleaserContext, nil
+}
+
+func readChangelog(r *git.Repository, tag string) (string, error) {
+	var hash plumbing.Hash
+
+	tags, err := r.Tags()
+	if err != nil {
+		return "", errors.Wrap(err, "failed to parse git tags")
+	}
+	tags.ForEach(func(t *plumbing.Reference) error {
+		if t.Name().String() == tag {
+			hash = t.Hash()
+		}
+		return nil
+	})
+
+	logOptions := &git.LogOptions{
+		From: hash,
+	}
+	logs, err := r.Log(logOptions)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to read git log")
+	}
+
+	changelog := "## Changelog\n\n"
+	logs.ForEach(func(commit *object.Commit) error {
+		changelog = fmt.Sprintf("%s%s %s\n", changelog, commit.Hash.String()[0:7], commit.Message)
+		return nil
+	})
+
+	return changelog, nil
 }

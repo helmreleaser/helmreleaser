@@ -2,7 +2,6 @@ package scm
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 
@@ -28,15 +27,13 @@ func NewGitHubClient(token string) *SCMClient {
 	return &scmClient
 }
 
-func (s *SCMClient) publishGitHubRelease(ctx helmreleaser.HelmReleaserContext, file string) error {
+func (s *SCMClient) publishGitHubRelease(ctx helmreleaser.HelmReleaserContext, file string) (string, error) {
 	_, assetName := path.Split(file)
 
-	title := "HelmReleaser release"
-
 	releaseData := &github.RepositoryRelease{
-		Name:       github.String(title),
+		Name:       github.String(ctx.Tag),
 		TagName:    github.String(ctx.Tag),
-		Body:       github.String("body"),
+		Body:       github.String(ctx.GetChangelog()),
 		Draft:      github.Bool(false),
 		Prerelease: github.Bool(false),
 	}
@@ -54,7 +51,7 @@ func (s *SCMClient) publishGitHubRelease(ctx helmreleaser.HelmReleaserContext, f
 
 	f, err := os.Open(file)
 	if err != nil {
-		return errors.Wrap(err, "failed to open file")
+		return "", errors.Wrap(err, "failed to open file")
 	}
 
 	releaseAsset, _, err := s.GitHub.Repositories.UploadReleaseAsset(context.Background(),
@@ -63,9 +60,8 @@ func (s *SCMClient) publishGitHubRelease(ctx helmreleaser.HelmReleaserContext, f
 		},
 		f)
 	if err != nil {
-		return errors.Wrap(err, "failed to upload asset to github")
+		return "", errors.Wrap(err, "failed to upload asset to github")
 	}
 
-	fmt.Printf("%s\n", *releaseAsset.BrowserDownloadURL)
-	return nil
+	return *releaseAsset.BrowserDownloadURL, nil
 }
