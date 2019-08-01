@@ -1,4 +1,4 @@
-baseURL = "helmreleaser.com"
+baseURL = "https://helmreleaser.com"
 languageCode = "en-us"
 title = "HelmReleaser"
 themesDir = "themes"
