@@ -22,11 +22,11 @@ pygmentsUseClasses = true
   google_analytics_id=""
   homepage_button_link = '/docs'
   homepage_button_text = 'Read The Docs'
-  homepage_intro = 'Whisper is a documentation theme built with Hugo. The design and functionality is intentionally minimal.'
+  homepage_intro = 'HelmReleaser is the easiest way to automatically publish Helm charts.'
   homepage_image = '/images/terminal.gif'
 
   [params.homepage_meta_tags]
-    meta_description = "Hugo Whisper is a documentation theme built with Hugo."
+    meta_description = "HelmReleaser is the easiest way to automatically publish Helm charts."
     meta_og_title = "Hugo Whisper Theme"
     meta_og_type = "website"
     meta_og_url = "https://hugo-whisper.netlify.com"
