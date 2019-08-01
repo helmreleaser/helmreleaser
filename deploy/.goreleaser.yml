@@ -24,6 +24,21 @@ builds:
     flags: -tags netgo -installsuffix netgo
     binary: helmreleaser
     hooks: {}
-
-snapshot:
-  name_template: SNAPSHOT-{{ .Commit }}
+archives:
+  - id: helmreleaser
+    builds:
+      - helmreleaser
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: '{{ .Binary }}_{{.Version}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{.Arm }}{{ end }}-{{ .Major }}.{{ .Minor }}.{{ .Patch }}'
+    files:
+      - licence*
+      - LICENCE*
+      - license*
+      - LICENSE*
+      - readme*
+      - README*
+      - changelog*
+      - CHANGELOG*
