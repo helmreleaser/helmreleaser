@@ -12,5 +12,5 @@ HelmReleaser publishes updates to Helm charts in your CI.
 - [On CI/CD systems](https://helmreleaser.io/ci)
 
 # Documentation
-Documentation is hosted at https://helmreleaser.io
+Documentation is hosted at https://helmreleaser.com
 

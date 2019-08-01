@@ -1,4 +1,4 @@
 # HelmReleaser docs
 
-These docs are hosted at https://helmreleaser.io.
+These docs are hosted at https://helmreleaser.com.
 
