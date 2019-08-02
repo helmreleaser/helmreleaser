@@ -42,3 +42,19 @@ archives:
       - README*
       - changelog*
       - CHANGELOG*
+brews:
+  - name: helmreleaser
+    github:
+      owner: helmreleaser
+      name: homebrew-tap
+    url_template: "http://github.com/helmreleaser/helmreleaser/releases/{{ .Tag }}/{{ .ArtifactName }}"
+
+
+    commit_author:
+      name: helmreleaserbot
+      email: helmreleaserbot@helmreleaser.com
+    folder: Formula
+
+    homepage: "https://helmreleaser.com/"
+
+    description: "The easiest way to publish Helm charts"
