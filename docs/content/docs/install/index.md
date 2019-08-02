@@ -12,17 +12,11 @@ To install HelmReleaser on your workstation, use one of the packaging tools belo
 $ brew install helmreleaser/tag/helmreleaser
 ```
 
-## Snapcraft
-
-```shell
-$ sudop snap install --classic helmreleaser
-```
-
 ## Compiling from source
 
 ```shell
 git clone https://github.com/helmreleaser/helmrelease
 cd helmreleaser
 make
-./helmreleaser --versionA
+./helmreleaser
 ```
